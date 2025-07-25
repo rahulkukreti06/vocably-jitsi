@@ -21,7 +21,7 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
     document.documentElement.classList.add('jitsi-meeting-active');
     document.body.classList.add('jitsi-meeting-active');
 
-    const domain = 'api.vocably.chat:8443'; // Use your VPS IP with port 8443
+    const domain = 'api.vocably.chat'; // Use your VPS IP with port 8443
     const options = {
       roomName: `${roomName}?config.disableDeepLinking=true&config.enableWelcomePage=false&interfaceConfig.MOBILE_APP_PROMO=false`,
       parentNode: jitsiContainerRef.current,
