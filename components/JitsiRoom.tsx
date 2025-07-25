@@ -57,7 +57,7 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
         SHOW_JITSI_WATERMARK: false,
         // Force desktop interface
         MOBILE_DETECTION_ENABLED: false,
-        MOBILE_APP_PROMO: false,
+        
         // Disable deep linking UI elements
         SHOW_DEEP_LINKING_IMAGE: false,
         // Hide mobile-specific elements
