@@ -170,7 +170,7 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
 
     if (!window.JitsiMeetExternalAPI) {
       const script = document.createElement('script');
-      script.src = `https://${domain}/external_api.js`;
+      script.src = `http://${domain}/external_api.js`;
       script.async = true;
       script.onload = createJitsi;
       document.body.appendChild(script);
