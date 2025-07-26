@@ -58,6 +58,35 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
     const createJitsi = () => {
       const api = new window.JitsiMeetExternalAPI(domain, options);
       apiRef.current = api;
+
+      // Auto-click "Join in browser" on mobile devices
+      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (isMobile) {
+        // Wait a bit for the prejoin screen to load, then auto-click "Join in browser"
+        setTimeout(() => {
+          const joinInBrowserBtn = document.querySelector('a[href*="Join in browser"]') ||
+                                  document.querySelector('button:contains("Join in browser")') ||
+                                  document.querySelector('[data-testid="join-in-browser"]') ||
+                                  document.querySelector('a:contains("Join in browser")');
+          
+          if (joinInBrowserBtn) {
+            console.log('Auto-clicking "Join in browser" for mobile');
+            (joinInBrowserBtn as HTMLElement).click();
+          }
+        }, 1000);
+
+        // Backup method - look for the link text
+        setTimeout(() => {
+          const allLinks = document.querySelectorAll('a, button');
+          for (const link of allLinks) {
+            if (link.textContent?.includes('Join in browser')) {
+              console.log('Found "Join in browser" link, clicking...');
+              (link as HTMLElement).click();
+              break;
+            }
+          }
+        }, 2000);
+      }
       
       // Track actual Jitsi meeting participants (not just page visits)
       if (roomId) {
