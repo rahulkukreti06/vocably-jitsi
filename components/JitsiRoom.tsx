@@ -39,62 +39,25 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
         displayName: session?.user?.name || 'Guest'
       },
       configOverwrite: {
-        subject, // Set the subject immediately
-        startWithAudioMuted: audioMuted, // Use saved preference or default to muted
-        startWithVideoMuted: videoMuted, // Use saved preference or default to muted
-        // Force disable prejoin on mobile - multiple approaches
-        prejoinPageEnabled: false,
-        PREJOIN_PAGE_ENABLED: false,
-        enablePrejoin: false,
-        // Skip all intro/setup pages
-        disableDeepLinking: true,
-        enableWelcomePage: false,
-        requireDisplayName: false,
-        // Aggressive mobile bypasses - force direct meeting join
-        disableMobileApp: true,
-        MOBILE_DETECTION_ENABLED: false,
-        enableNoAudioDetection: false,
-        enableNoisyMicDetection: false,
-        enableClosePage: false,
-        disableProfile: true,
-        // Force auto-join on mobile
-        autoPlayPolicy: 'always',
-        startScreenSharing: false,
-        // Performance settings for mobile
-        enableLayerSuspension: true,
-        channelLastN: 15, // Reduced for better mobile performance
-        resolution: 480, // Lower resolution for mobile
-        constraints: {
-          video: {
-            height: { ideal: 480, max: 720, min: 240 },
-            width: { ideal: 640, max: 1280, min: 320 }
-          }
-        },
-        // Remember user's media state
-        rememberDeviceOptions: true,
-        // Toolbar auto-hide settings - longer timeouts for mobile
-        toolbarConfig: {
-          alwaysVisible: false, // Allow toolbar to hide
-          timeout: 6000, // Hide after 6 seconds (longer for mobile)
-          initialTimeout: 12000, // Initial visibility for 12 seconds (longer for mobile)
-        }
+        subject, // Set the meeting subject/title
+        startWithAudioMuted: audioMuted, // Use saved preference
+        startWithVideoMuted: videoMuted, // Use saved preference
+        prejoinPageEnabled: false, // Skip the pre-join page
+        requireDisplayName: false
       },
       interfaceConfigOverwrite: {
         APP_NAME: 'Vocably',
         SHOW_JITSI_WATERMARK: false,
-        // Mobile toolbar settings with auto-hide - longer timeouts for better UX
+        // Mobile toolbar settings - ensure it's always accessible
         MOBILE_APP_PROMO: false,
-        TOOLBAR_ALWAYS_VISIBLE: false, // Allow toolbar to auto-hide
-        INITIAL_TOOLBAR_TIMEOUT: 12000, // Show for 12 seconds initially (longer for mobile)
-        TOOLBAR_TIMEOUT: 6000, // Show for 6 seconds when tapped (longer for mobile)
-        // Mobile-specific bypass settings
-        MOBILE_DETECTION_ENABLED: false,
-        DISPLAY_WELCOME_PAGE_CONTENT: false,
-        SHOW_DEEP_LINKING_IMAGE: false,
-        SHOW_PROMOTIONAL_CLOSE_PAGE: false,
-        // Enforce direct meeting access
-        ENFORCE_NOTIFICATION_AUTO_DISMISS_TIMEOUT: 3000,
-        DISABLE_TRANSCRIPTION_SUBTITLES: true
+        TOOLBAR_ALWAYS_VISIBLE: false,
+        INITIAL_TOOLBAR_TIMEOUT: 20000, // Show for 20 seconds initially
+        TOOLBAR_TIMEOUT: 10000, // Show for 10 seconds when tapped
+        // Ensure toolbar buttons are visible
+        TOOLBAR_BUTTONS: [
+          'microphone', 'camera', 'hangup', 'chat', 'desktop', 
+          'fullscreen', 'fodeviceselection', 'settings'
+        ]
       }
     };
 
@@ -216,40 +179,6 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
           router.push('/');
         }, 2000); // Show thank you message for 2 seconds
       });
-
-      // Mobile-specific: Force auto-join if prejoin screen appears
-      api.addListener('videoConferenceJoined', () => {
-        console.log('Successfully joined video conference');
-      });
-
-      // Force join on mobile devices if stuck on prejoin
-      const isMobile = window.innerWidth <= 768 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      if (isMobile) {
-        // Add multiple fallbacks to ensure meeting starts on mobile
-        setTimeout(() => {
-          // Try to find and click join button if it exists
-          const joinButton = document.querySelector('[data-testid="prejoin.joinMeeting"]') || 
-                           document.querySelector('.prejoin-btn') ||
-                           document.querySelector('[aria-label*="Join"]') ||
-                           document.querySelector('button:contains("Join")');
-          
-          if (joinButton && joinButton instanceof HTMLElement) {
-            console.log('Found prejoin button, clicking automatically for mobile');
-            joinButton.click();
-          }
-        }, 1500);
-
-        // Backup method: Use API commands
-        setTimeout(() => {
-          try {
-            // Try various API commands to force join
-            api.executeCommand('displayName', session?.user?.name || 'Vocably User');
-            api.executeCommand('subject', subject);
-          } catch (e) {
-            console.log('API commands not ready yet');
-          }
-        }, 2000);
-      }
     };
 
     if (!window.JitsiMeetExternalAPI) {
@@ -270,12 +199,6 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
       // Remove class on unmount
       document.documentElement.classList.remove('jitsi-meeting-active');
       document.body.classList.remove('jitsi-meeting-active');
-      
-      // Clean up mobile styles
-      const existingStyle = document.getElementById('vocably-mobile-fixes');
-      if (existingStyle) {
-        existingStyle.remove();
-      }
       
       // Clean up participant tracking when component unmounts
       if (roomId && apiRef.current?._cleanupBeforeUnload) {
