@@ -48,7 +48,7 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
         requireDisplayName: false,
         // Essential mobile settings only
         disableMobileApp: true,
-        MOBILE_DETECTION_ENABLED: false,
+        MOBILE_DETECTION_ENABLED: true,
         // Mobile-specific optimizations
         enableNoAudioDetection: false,
         enableNoisyMicDetection: false,
