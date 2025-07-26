@@ -157,9 +157,6 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
         // Force auto-join on mobile
         autoPlayPolicy: 'always',
         startScreenSharing: false,
-        // Skip all intro screens
-        enableWelcomePage: false,
-        enableClosePage: false,
         // Performance settings for mobile
         enableLayerSuspension: true,
         channelLastN: 15, // Reduced for better mobile performance
