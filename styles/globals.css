@@ -64,6 +64,24 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Hide Jitsi mobile pre-join screen */
+.mobile-app-promo,
+[class*="mobile-app-promo"],
+.deep-linking-mobile,
+[class*="deep-linking"],
+.prejoin-app-selector,
+[class*="app-selector"],
+/* Target the actual mobile selection screen */
+[class*="mobile-browser-redirect"],
+[class*="redirecting"],
+.toolbox-content-items > div:first-child {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
 section, main, .card, .container, .responsive-container {
   background: transparent !important;
   border-radius: var(--radius-lg);
