@@ -31,8 +31,10 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
 
     const domain = 'api.vocably.chat'; // Use domain without port (nginx will proxy)
     const options = {
-      roomName: `${roomName}?config.disableDeepLinking=true&config.enableWelcomePage=false&interfaceConfig.MOBILE_APP_PROMO=false`,
+      roomName: roomName, // Clean room name without URL parameters
       parentNode: jitsiContainerRef.current,
+      width: '100%',
+      height: '100vh',
       userInfo: {
         displayName: session?.user?.name || 'Guest'
       },
@@ -47,13 +49,19 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
         // Essential mobile settings only
         disableMobileApp: true,
         MOBILE_DETECTION_ENABLED: false,
+        // Mobile-specific optimizations
+        enableNoAudioDetection: false,
+        enableNoisyMicDetection: false,
+        enableClosePage: false,
+        disableProfile: true,
         // Faster loading settings
         enableLayerSuspension: true,
-        channelLastN: 20,
-        resolution: 720,
+        channelLastN: 15, // Reduced for better mobile performance
+        resolution: 480, // Lower resolution for mobile
         constraints: {
           video: {
-            height: { ideal: 720, max: 720, min: 240 }
+            height: { ideal: 480, max: 720, min: 240 },
+            width: { ideal: 640, max: 1280, min: 320 }
           }
         },
         // Remember user's media state
