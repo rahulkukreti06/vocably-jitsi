@@ -17,6 +17,103 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
   const hasLeftRef = useRef(false);
 
   useEffect(() => {
+    // Mobile viewport optimization - ensure proper scaling
+    const viewport = document.querySelector('meta[name="viewport"]');
+    if (viewport) {
+      viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+    } else {
+      const newViewport = document.createElement('meta');
+      newViewport.name = 'viewport';
+      newViewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
+      document.head.appendChild(newViewport);
+    }
+
+    // Force mobile CSS fixes for Jitsi interface positioning
+    const mobileStyle = document.createElement('style');
+    mobileStyle.id = 'vocably-mobile-fixes';
+    mobileStyle.textContent = `
+      /* Mobile Jitsi interface fixes */
+      @media (max-width: 768px) {
+        /* Fix Jitsi container positioning */
+        #jitsi-container {
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          z-index: 9999 !important;
+        }
+        
+        /* Fix toolbar positioning - ensure it's visible and centered */
+        .toolbox {
+          position: fixed !important;
+          bottom: 20px !important;
+          left: 50% !important;
+          transform: translateX(-50%) !important;
+          z-index: 10000 !important;
+          width: auto !important;
+          max-width: 90vw !important;
+        }
+        
+        /* Fix prejoin screen positioning */
+        .prejoin-screen, [data-testid="prejoin.screen"] {
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          z-index: 9999 !important;
+          display: flex !important;
+          flex-direction: column !important;
+          justify-content: center !important;
+          align-items: center !important;
+        }
+        
+        /* Ensure video containers fit screen */
+        .videocontainer, .large-video-container {
+          width: 100vw !important;
+          height: 100vh !important;
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+        }
+        
+        /* Fix filmstrip positioning */
+        .filmstrip {
+          bottom: 80px !important; /* Above toolbar */
+        }
+        
+        /* Ensure buttons are touchable */
+        .toolbox .toolbox-button {
+          min-width: 44px !important;
+          min-height: 44px !important;
+          margin: 0 2px !important;
+        }
+        
+        /* Fix any overflow issues */
+        body.jitsi-meeting-active {
+          overflow: hidden !important;
+          position: fixed !important;
+          width: 100% !important;
+          height: 100% !important;
+        }
+        
+        /* Ensure prejoin elements are visible */
+        .prejoin-preview, .prejoin-input-area {
+          width: 90% !important;
+          max-width: 400px !important;
+          margin: 10px auto !important;
+        }
+      }
+    `;
+    
+    // Remove existing mobile fixes if they exist
+    const existingStyle = document.getElementById('vocably-mobile-fixes');
+    if (existingStyle) {
+      existingStyle.remove();
+    }
+    document.head.appendChild(mobileStyle);
+
     // Add class to html/body to disable scroll in meeting view
     document.documentElement.classList.add('jitsi-meeting-active');
     document.body.classList.add('jitsi-meeting-active');
@@ -42,19 +139,28 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
         subject, // Set the subject immediately
         startWithAudioMuted: audioMuted, // Use saved preference or default to muted
         startWithVideoMuted: videoMuted, // Use saved preference or default to muted
-        prejoinPageEnabled: false, // Skip the pre-join page for faster loading
+        // Force disable prejoin on mobile - multiple approaches
+        prejoinPageEnabled: false,
+        PREJOIN_PAGE_ENABLED: false,
+        enablePrejoin: false,
+        // Skip all intro/setup pages
         disableDeepLinking: true,
         enableWelcomePage: false,
         requireDisplayName: false,
-        // Essential mobile settings only
+        // Aggressive mobile bypasses - force direct meeting join
         disableMobileApp: true,
-        MOBILE_DETECTION_ENABLED: true,
-        // Mobile-specific optimizations
+        MOBILE_DETECTION_ENABLED: false,
         enableNoAudioDetection: false,
         enableNoisyMicDetection: false,
         enableClosePage: false,
         disableProfile: true,
-        // Faster loading settings
+        // Force auto-join on mobile
+        autoPlayPolicy: 'always',
+        startScreenSharing: false,
+        // Skip all intro screens
+        enableWelcomePage: false,
+        enableClosePage: false,
+        // Performance settings for mobile
         enableLayerSuspension: true,
         channelLastN: 15, // Reduced for better mobile performance
         resolution: 480, // Lower resolution for mobile
@@ -66,21 +172,29 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
         },
         // Remember user's media state
         rememberDeviceOptions: true,
-        // Toolbar auto-hide settings
+        // Toolbar auto-hide settings - longer timeouts for mobile
         toolbarConfig: {
           alwaysVisible: false, // Allow toolbar to hide
-          timeout: 4000, // Hide after 4 seconds
-          initialTimeout: 8000, // Initial visibility for 8 seconds
+          timeout: 6000, // Hide after 6 seconds (longer for mobile)
+          initialTimeout: 12000, // Initial visibility for 12 seconds (longer for mobile)
         }
       },
       interfaceConfigOverwrite: {
         APP_NAME: 'Vocably',
         SHOW_JITSI_WATERMARK: false,
-        // Mobile toolbar settings with auto-hide
+        // Mobile toolbar settings with auto-hide - longer timeouts for better UX
         MOBILE_APP_PROMO: false,
         TOOLBAR_ALWAYS_VISIBLE: false, // Allow toolbar to auto-hide
-        INITIAL_TOOLBAR_TIMEOUT: 8000, // Show for 8 seconds initially
-        TOOLBAR_TIMEOUT: 4000 // Show for 4 seconds when tapped
+        INITIAL_TOOLBAR_TIMEOUT: 12000, // Show for 12 seconds initially (longer for mobile)
+        TOOLBAR_TIMEOUT: 6000, // Show for 6 seconds when tapped (longer for mobile)
+        // Mobile-specific bypass settings
+        MOBILE_DETECTION_ENABLED: false,
+        DISPLAY_WELCOME_PAGE_CONTENT: false,
+        SHOW_DEEP_LINKING_IMAGE: false,
+        SHOW_PROMOTIONAL_CLOSE_PAGE: false,
+        // Enforce direct meeting access
+        ENFORCE_NOTIFICATION_AUTO_DISMISS_TIMEOUT: 3000,
+        DISABLE_TRANSCRIPTION_SUBTITLES: true
       }
     };
 
@@ -202,6 +316,40 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
           router.push('/');
         }, 2000); // Show thank you message for 2 seconds
       });
+
+      // Mobile-specific: Force auto-join if prejoin screen appears
+      api.addListener('videoConferenceJoined', () => {
+        console.log('Successfully joined video conference');
+      });
+
+      // Force join on mobile devices if stuck on prejoin
+      const isMobile = window.innerWidth <= 768 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (isMobile) {
+        // Add multiple fallbacks to ensure meeting starts on mobile
+        setTimeout(() => {
+          // Try to find and click join button if it exists
+          const joinButton = document.querySelector('[data-testid="prejoin.joinMeeting"]') || 
+                           document.querySelector('.prejoin-btn') ||
+                           document.querySelector('[aria-label*="Join"]') ||
+                           document.querySelector('button:contains("Join")');
+          
+          if (joinButton && joinButton instanceof HTMLElement) {
+            console.log('Found prejoin button, clicking automatically for mobile');
+            joinButton.click();
+          }
+        }, 1500);
+
+        // Backup method: Use API commands
+        setTimeout(() => {
+          try {
+            // Try various API commands to force join
+            api.executeCommand('displayName', session?.user?.name || 'Vocably User');
+            api.executeCommand('subject', subject);
+          } catch (e) {
+            console.log('API commands not ready yet');
+          }
+        }, 2000);
+      }
     };
 
     if (!window.JitsiMeetExternalAPI) {
@@ -222,6 +370,12 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
       // Remove class on unmount
       document.documentElement.classList.remove('jitsi-meeting-active');
       document.body.classList.remove('jitsi-meeting-active');
+      
+      // Clean up mobile styles
+      const existingStyle = document.getElementById('vocably-mobile-fixes');
+      if (existingStyle) {
+        existingStyle.remove();
+      }
       
       // Clean up participant tracking when component unmounts
       if (roomId && apiRef.current?._cleanupBeforeUnload) {
