@@ -64,28 +64,41 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
       if (isMobile) {
         // Wait a bit for the prejoin screen to load, then auto-click "Join in browser"
         setTimeout(() => {
-          const joinInBrowserBtn = document.querySelector('a[href*="Join in browser"]') ||
-                                  document.querySelector('button:contains("Join in browser")') ||
+          // Method 1: Look for specific data attributes or IDs
+          const joinInBrowserBtn = document.querySelector('a[href*="browser"]') ||
                                   document.querySelector('[data-testid="join-in-browser"]') ||
-                                  document.querySelector('a:contains("Join in browser")');
+                                  document.querySelector('#join-in-browser');
           
           if (joinInBrowserBtn) {
             console.log('Auto-clicking "Join in browser" for mobile');
             (joinInBrowserBtn as HTMLElement).click();
+            return;
+          }
+
+          // Method 2: Search through all links and buttons by text content
+          const allElements = document.querySelectorAll('a, button');
+          for (const element of allElements) {
+            const text = element.textContent?.toLowerCase() || '';
+            if (text.includes('join in browser') || text.includes('browser')) {
+              console.log('Found "Join in browser" element, clicking...');
+              (element as HTMLElement).click();
+              return;
+            }
           }
         }, 1000);
 
-        // Backup method - look for the link text
+        // Backup method - try again after more time
         setTimeout(() => {
-          const allLinks = document.querySelectorAll('a, button');
-          for (const link of allLinks) {
-            if (link.textContent?.includes('Join in browser')) {
-              console.log('Found "Join in browser" link, clicking...');
-              (link as HTMLElement).click();
+          const allElements = document.querySelectorAll('a, button, div[role="button"]');
+          for (const element of allElements) {
+            const text = element.textContent?.toLowerCase() || '';
+            if (text.includes('join in browser')) {
+              console.log('Backup: Found "Join in browser" element, clicking...');
+              (element as HTMLElement).click();
               break;
             }
           }
-        }, 2000);
+        }, 3000);
       }
       
       // Track actual Jitsi meeting participants (not just page visits)
