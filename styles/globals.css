@@ -65,7 +65,50 @@ html, body {
 }
 
 html.jitsi-meeting-active, body.jitsi-meeting-active {
-  overflow-y: hidden !important;
+  overflow: hidden !important;
+  position: fixed !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Ensure Jitsi toolbar is always visible on mobile */
+@media (max-width: 768px) {
+  .jitsi-meeting-active .toolbox,
+  .jitsi-meeting-active [class*="toolbox"],
+  .jitsi-meeting-active .new-toolbox {
+    position: fixed !important;
+    bottom: 20px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 999999 !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    border-radius: 24px !important;
+    padding: 8px 16px !important;
+    max-width: 90vw !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: flex !important;
+  }
+  
+  /* Ensure individual toolbar buttons are visible */
+  .jitsi-meeting-active .toolbox-button,
+  .jitsi-meeting-active [class*="toolbox-button"] {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: flex !important;
+  }
+  
+  /* Force Jitsi container to be full screen */
+  .jitsi-meeting-active #jitsi-container {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 999998 !important;
+  }
 }
 
 section, main, .card, .container, .responsive-container {
