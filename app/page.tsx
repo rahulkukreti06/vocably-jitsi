@@ -158,12 +158,7 @@ export default function Page() {
           return;
         }
         try {
-          await fetch('/api/room-participants', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ roomId: room.id, action: 'join' }),
-          });
-          router.push(`/rooms/${room.id}`); // Removed setTimeout for instant navigation
+          router.push(`/rooms/${room.id}`); // Navigate directly, participant count tracked in Jitsi meeting
         } catch (err) {
           alert('Failed to join the room.');
           console.error(err);
@@ -179,14 +174,9 @@ export default function Page() {
       setIsJoiningMap(prev => ({ ...prev, [room.id]: false }));
       return;
     }
-    // Call backend to increment participant count
+    // Navigate to room (participant count will be incremented when actually joining Jitsi meeting)
     try {
-      await fetch('/api/room-participants', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomId: room.id, action: 'join' }),
-      });
-      router.push(`/rooms/${room.id}`); // Removed setTimeout for instant navigation
+      router.push(`/rooms/${room.id}`);
     } catch (err) {
       alert('Failed to join the room.');
       console.error(err);
