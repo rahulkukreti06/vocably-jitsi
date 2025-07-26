@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 
@@ -21,7 +21,15 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
     document.documentElement.classList.add('jitsi-meeting-active');
     document.body.classList.add('jitsi-meeting-active');
 
-    const domain = 'api.vocably.chat'; // Use your VPS IP with port 8443
+    // Get saved audio/video preferences from localStorage
+    const savedAudioMuted = localStorage.getItem('vocably-audio-muted') === 'true';
+    const savedVideoMuted = localStorage.getItem('vocably-video-muted') === 'true';
+    
+    // If no preference saved yet, default to muted (privacy-first approach)
+    const audioMuted = localStorage.getItem('vocably-audio-muted') === null ? true : savedAudioMuted;
+    const videoMuted = localStorage.getItem('vocably-video-muted') === null ? true : savedVideoMuted;
+
+    const domain = 'api.vocably.chat'; // Use domain without port (nginx will proxy)
     const options = {
       roomName: `${roomName}?config.disableDeepLinking=true&config.enableWelcomePage=false&interfaceConfig.MOBILE_APP_PROMO=false`,
       parentNode: jitsiContainerRef.current,
@@ -30,39 +38,41 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
       },
       configOverwrite: {
         subject, // Set the subject immediately
-        SHOW_PROMOTIONAL_CLOSE_PAGE: true, // Allow close page to show
-        closePage: { 
-          enabled: true,
-          customMessage: "Thank you for using Vocably! 🎉"
-        },
-        startWithAudioMuted: false,
-        startWithVideoMuted: false,
-        prejoinPageEnabled: false, // Skip the pre-join page
-        disableDeepLinking: true, // Disable deep linking to app
-        disableThirdPartyRequests: true,
+        startWithAudioMuted: audioMuted, // Use saved preference or default to muted
+        startWithVideoMuted: videoMuted, // Use saved preference or default to muted
+        prejoinPageEnabled: false, // Skip the pre-join page for faster loading
+        disableDeepLinking: true,
         enableWelcomePage: false,
-        // Force web interface - disable mobile app detection
-        enableMobileSimulcast: false,
-        disableMobileApp: true,
         requireDisplayName: false,
-        // Disable app promotion
+        // Essential mobile settings only
+        disableMobileApp: true,
         MOBILE_DETECTION_ENABLED: false,
-        ENFORCE_NOTIFICATION_AUTO_DISMISS_TIMEOUT: 5000
+        // Faster loading settings
+        enableLayerSuspension: true,
+        channelLastN: 20,
+        resolution: 720,
+        constraints: {
+          video: {
+            height: { ideal: 720, max: 720, min: 240 }
+          }
+        },
+        // Remember user's media state
+        rememberDeviceOptions: true,
+        // Toolbar auto-hide settings
+        toolbarConfig: {
+          alwaysVisible: false, // Allow toolbar to hide
+          timeout: 4000, // Hide after 4 seconds
+          initialTimeout: 8000, // Initial visibility for 8 seconds
+        }
       },
       interfaceConfigOverwrite: {
-        SHOW_PROMOTIONAL_CLOSE_PAGE: true,
-        MOBILE_APP_PROMO: false, // Disable mobile app promotion
-        NATIVE_APP_NAME: undefined,
         APP_NAME: 'Vocably',
         SHOW_JITSI_WATERMARK: false,
-        // Force desktop interface
-        MOBILE_DETECTION_ENABLED: false,
-        
-        // Disable deep linking UI elements
-        SHOW_DEEP_LINKING_IMAGE: false,
-        // Hide mobile-specific elements
-        HIDE_DEEP_LINKING_LOGO: true,
-        SHOW_MOBILE_APP_PROMO: false
+        // Mobile toolbar settings with auto-hide
+        MOBILE_APP_PROMO: false,
+        TOOLBAR_ALWAYS_VISIBLE: false, // Allow toolbar to auto-hide
+        INITIAL_TOOLBAR_TIMEOUT: 8000, // Show for 8 seconds initially
+        TOOLBAR_TIMEOUT: 4000 // Show for 4 seconds when tapped
       }
     };
 
@@ -73,24 +83,45 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
       
       api.executeCommand('subject', subject); // Set the meeting subject/title (redundant, but ensures update)
       
-      // Track participant join/leave for room count
+      // Track actual Jitsi meeting participants (not just page visits)
       if (roomId) {
-        // Note: Join API call is handled in the main page before navigation
-        // We only need to handle the leave tracking here
-        
-        // Function to handle leaving (call only once)
-        const handleLeave = () => {
+        // Track actual meeting join/leave events
+        api.addEventListener('videoConferenceJoined', () => {
+          if (!hasJoinedRef.current) {
+            hasJoinedRef.current = true;
+            console.log('User actually joined Jitsi meeting');
+            fetch('/api/room-participants', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ roomId, action: 'join' }),
+            }).catch(err => console.error('Failed to update participant count on join:', err));
+          }
+        });
+
+        // Save audio/video mute preferences to localStorage
+        api.addEventListener('audioMuteStatusChanged', (event: any) => {
+          localStorage.setItem('vocably-audio-muted', event.muted.toString());
+          console.log('Audio mute status saved:', event.muted);
+        });
+
+        api.addEventListener('videoMuteStatusChanged', (event: any) => {
+          localStorage.setItem('vocably-video-muted', event.muted.toString());
+          console.log('Video mute status saved:', event.muted);
+        });
+
+        api.addEventListener('videoConferenceLeft', () => {
           if (!hasLeftRef.current) {
             hasLeftRef.current = true;
+            console.log('User actually left Jitsi meeting');
             fetch('/api/room-participants', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ roomId, action: 'leave' }),
             }).catch(err => console.error('Failed to update participant count on leave:', err));
           }
-        };
-
-        // Also handle window/tab close events
+        });
+        
+        // Also handle window/tab close events (only if not already left)
         const handleBeforeUnload = () => {
           if (!hasLeftRef.current) {
             hasLeftRef.current = true;
@@ -108,9 +139,6 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
         
         // Store cleanup function for later use
         (api as any)._cleanupBeforeUnload = cleanupBeforeUnload;
-        
-        // Store the leave handler for the main readyToClose listener
-        (api as any)._handleLeave = handleLeave;
       }
       
       // Inject CSS to customize the close page with Vocably branding
@@ -170,7 +198,7 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
 
     if (!window.JitsiMeetExternalAPI) {
       const script = document.createElement('script');
-      script.src = `https://${domain}/external_api.js`;
+      script.src = `https://${domain}/external_api.js`; // Back to HTTPS
       script.async = true;
       script.onload = createJitsi;
       document.body.appendChild(script);
@@ -190,15 +218,6 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
       // Clean up participant tracking when component unmounts
       if (roomId && apiRef.current?._cleanupBeforeUnload) {
         apiRef.current._cleanupBeforeUnload();
-        // Also send leave event when component unmounts unexpectedly
-        if (!hasLeftRef.current) {
-          hasLeftRef.current = true;
-          fetch('/api/room-participants', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ roomId, action: 'leave' }),
-          }).catch(err => console.error('Failed to update participant count on unmount:', err));
-        }
       }
       
       if (jitsiContainerRef.current) {
