@@ -17,10 +17,6 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
   const hasLeftRef = useRef(false);
 
   useEffect(() => {
-    // Add class to html/body to disable scroll in meeting view
-    document.documentElement.classList.add('jitsi-meeting-active');
-    document.body.classList.add('jitsi-meeting-active');
-
     // Get saved audio/video preferences from localStorage
     const savedAudioMuted = localStorage.getItem('vocably-audio-muted') === 'true';
     const savedVideoMuted = localStorage.getItem('vocably-video-muted') === 'true';
@@ -31,33 +27,12 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
 
     const domain = 'api.vocably.chat'; // Use domain without port (nginx will proxy)
     const options = {
-      roomName: roomName, // Clean room name without URL parameters
+      roomName: roomName,
       parentNode: jitsiContainerRef.current,
       width: '100%',
       height: '100vh',
       userInfo: {
         displayName: session?.user?.name || 'Guest'
-      },
-      configOverwrite: {
-        subject, // Set the meeting subject/title
-        startWithAudioMuted: audioMuted, // Use saved preference
-        startWithVideoMuted: videoMuted, // Use saved preference
-        prejoinPageEnabled: false, // Skip the pre-join page
-        requireDisplayName: false
-      },
-      interfaceConfigOverwrite: {
-        APP_NAME: 'Vocably',
-        SHOW_JITSI_WATERMARK: false,
-        // Mobile toolbar settings - ensure it's always accessible
-        MOBILE_APP_PROMO: false,
-        TOOLBAR_ALWAYS_VISIBLE: false,
-        INITIAL_TOOLBAR_TIMEOUT: 20000, // Show for 20 seconds initially
-        TOOLBAR_TIMEOUT: 10000, // Show for 10 seconds when tapped
-        // Ensure toolbar buttons are visible
-        TOOLBAR_BUTTONS: [
-          'microphone', 'camera', 'hangup', 'chat', 'desktop', 
-          'fullscreen', 'fodeviceselection', 'settings'
-        ]
       }
     };
 
@@ -65,8 +40,6 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
     const createJitsi = () => {
       const api = new window.JitsiMeetExternalAPI(domain, options);
       apiRef.current = api;
-      
-      api.executeCommand('subject', subject); // Set the meeting subject/title (redundant, but ensures update)
       
       // Track actual Jitsi meeting participants (not just page visits)
       if (roomId) {
@@ -196,10 +169,6 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
       hasJoinedRef.current = false;
       hasLeftRef.current = false;
       
-      // Remove class on unmount
-      document.documentElement.classList.remove('jitsi-meeting-active');
-      document.body.classList.remove('jitsi-meeting-active');
-      
       // Clean up participant tracking when component unmounts
       if (roomId && apiRef.current?._cleanupBeforeUnload) {
         apiRef.current._cleanupBeforeUnload();
@@ -213,18 +182,6 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
 
   return <div
     ref={jitsiContainerRef}
-    data-jitsi-meeting
-    style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100vw',
-      height: '100vh',
-      margin: 0,
-      padding: 0,
-      overflow: 'hidden',
-      zIndex: 9999,
-      background: '#000'
-    }}
+    id="jitsi-container"
   />;
 }
