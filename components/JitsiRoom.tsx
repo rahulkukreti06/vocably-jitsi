@@ -27,12 +27,17 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
 
     const domain = 'api.vocably.chat'; // Use domain without port (nginx will proxy)
     const options = {
-      roomName: subject || roomName,
+      roomName: subject || roomName, // Use actual room name (subject) instead of room ID
       parentNode: jitsiContainerRef.current,
       width: '100%',
       height: '100vh',
       userInfo: {
         displayName: session?.user?.name || 'Guest'
+      },
+      configOverwrite: {
+        prejoinPageEnabled: false, // Skip the mobile pre-join screen
+        startWithAudioMuted: audioMuted,
+        startWithVideoMuted: videoMuted
       }
     };
 
