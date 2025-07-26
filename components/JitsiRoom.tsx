@@ -37,7 +37,20 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
       configOverwrite: {
         prejoinPageEnabled: false, // Skip the mobile pre-join screen
         startWithAudioMuted: audioMuted,
-        startWithVideoMuted: videoMuted
+        startWithVideoMuted: videoMuted,
+        // Force disable mobile app prompts
+        disableMobileApp: true,
+        // Additional mobile bypasses
+        enableWelcomePage: false,
+        requireDisplayName: false
+      },
+      interfaceConfigOverwrite: {
+        // Disable mobile app promotion
+        MOBILE_APP_PROMO: false,
+        // Hide deep linking
+        SHOW_DEEP_LINKING_IMAGE: false,
+        // Disable welcome page content
+        DISPLAY_WELCOME_PAGE_CONTENT: false
       }
     };
 
