@@ -17,6 +17,41 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
   const hasLeftRef = useRef(false);
 
   useEffect(() => {
+    // Aggressively auto-click "Join in browser" on mobile pre-join screen
+    let joinObserver: MutationObserver | null = null;
+
+    function tryClickJoinInBrowser() {
+      // Look for the join in browser link/button
+      const joinInBrowserBtn = document.querySelector('a[href*="browser"], [data-testid="join-in-browser"], #join-in-browser');
+      if (joinInBrowserBtn) {
+        (joinInBrowserBtn as HTMLElement).click();
+        return true;
+      }
+      // Fallback: search by text
+      const allElements = document.querySelectorAll('a, button, div[role="button"]');
+      for (const element of allElements) {
+        const text = element.textContent?.toLowerCase() || '';
+        if (text.includes('join in browser')) {
+          (element as HTMLElement).click();
+          return true;
+        }
+      }
+      return false;
+    }
+
+    // Only run this on mobile devices
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobile) {
+      // Try immediately
+      setTimeout(tryClickJoinInBrowser, 500);
+      // Try again after a second
+      setTimeout(tryClickJoinInBrowser, 1500);
+      // Use MutationObserver to catch late loads
+      joinObserver = new MutationObserver(() => {
+        tryClickJoinInBrowser();
+      });
+      joinObserver.observe(document.body, { childList: true, subtree: true });
+    }
     // (Removed aggressive user agent and screen spoofing to restore mobile responsiveness)
 
     // Get saved audio/video preferences from localStorage
@@ -240,6 +275,10 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
     }
 
     return () => {
+      // Clean up MutationObserver
+      if (joinObserver) {
+        joinObserver.disconnect();
+      }
       // Reset flags for potential re-renders
       hasJoinedRef.current = false;
       hasLeftRef.current = false;
