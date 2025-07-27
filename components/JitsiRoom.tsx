@@ -17,6 +17,8 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
   const hasLeftRef = useRef(false);
 
   useEffect(() => {
+    // (Removed aggressive user agent and screen spoofing to restore mobile responsiveness)
+
     // Get saved audio/video preferences from localStorage
     const savedAudioMuted = localStorage.getItem('vocably-audio-muted') === 'true';
     const savedVideoMuted = localStorage.getItem('vocably-video-muted') === 'true';
