@@ -42,7 +42,14 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
         disableMobileApp: true,
         // Additional mobile bypasses
         enableWelcomePage: false,
-        requireDisplayName: false
+        requireDisplayName: false,
+        // Disable mobile detection entirely
+        isMobile: false,
+        // Force desktop mode
+        forceDesktop: true,
+        // Disable mobile-specific features
+        disableMobileAppPromo: true,
+        enableMobileMode: false
       },
       interfaceConfigOverwrite: {
         // Disable mobile app promotion
@@ -50,7 +57,13 @@ export default function JitsiRoom({ roomName, subject, roomId }: { roomName: str
         // Hide deep linking
         SHOW_DEEP_LINKING_IMAGE: false,
         // Disable welcome page content
-        DISPLAY_WELCOME_PAGE_CONTENT: false
+        DISPLAY_WELCOME_PAGE_CONTENT: false,
+        // Force disable mobile detection
+        MOBILE_DETECTION_ENABLED: false,
+        // Hide mobile browser redirect
+        SHOW_PROMOTIONAL_CLOSE_PAGE: false,
+        // Disable mobile app banner
+        SHOW_CHROME_EXTENSION_BANNER: false
       }
     };
 
