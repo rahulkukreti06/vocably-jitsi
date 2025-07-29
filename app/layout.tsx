@@ -10,6 +10,7 @@ import '../styles/responsive.css';
 // import '@livekit/components-styles/prefabs';
 // import '../styles/livekit-chat-fix.css';
 import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
 import { Toaster } from 'react-hot-toast';
 import { Providers } from './providers';
 
@@ -112,35 +113,26 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main className="container mx-auto px-4 sm:px-6 lg:px-8 relative min-h-screen main-content" style={{ paddingTop: '4.5rem' }}>
             {children}
   return (
-    <html lang="en">
-      <head>
-        <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, shrink-to-fit-no' />
-        <link rel="canonical" href="https://vocably.chat/" />
-        <meta name="keywords" content="language learning, voice chat, practice English, make friends, talk to strangers, global community, learn languages, public rooms, private rooms, Vocably" />
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: `{
-          \"@context\": \"https://schema.org\",\n          \"@type\": \"WebSite\",\n          \"name\": \"Vocably\",\n          \"url\": \"https://vocably.chat/",\n          \"description\": \"Vocably is a free real-time voice chat app for learning new languages, practicing English, and making friends with people around the world.\"\n        }` }} />
-        {/* Google Analytics */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z7821647DB"></script>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-Z7821647DB');
-            `,
-          }}
-        />
-      </head>
-      <body>
-        <Providers>
-          {/* Move header above main so it is sticky/fixed at the top */}
-          <div id="header-portal" />
-          <main className="container mx-auto px-4 sm:px-6 lg:px-8 relative min-h-screen main-content" style={{ paddingTop: '4.5rem' }}>
-            {children}
-          </main>
-          <Toaster position="top-right" />
-        </Providers>
-      </body>
-    </html>
+    <>
+      <Script
+        src="https://www.googletagmanager.com/gtag/js?id=G-Z7821647DB"
+        strategy="afterInteractive"
+      />
+      <Script id="google-analytics" strategy="afterInteractive">
+        {`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-Z7821647DB');
+        `}
+      </Script>
+      <Providers>
+        {/* Move header above main so it is sticky/fixed at the top */}
+        <div id="header-portal" />
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 relative min-h-screen main-content" style={{ paddingTop: '4.5rem' }}>
+          {children}
+        </main>
+        <Toaster position="top-right" />
+      </Providers>
+    </>
   );
