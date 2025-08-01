@@ -1,85 +1,44 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient'; // Adjust the import based on your project structure
+import { supabase } from '@/lib/supabaseClient';
 
-// Initialize participant counts
-let participantCounts = global.participantCounts || {};
-if (!global.participantCounts) {
-  global.participantCounts = participantCounts;
-}
-
-// Add type declaration for globalThis.broadcastParticipantCounts
-declare global {
-  // eslint-disable-next-line no-var
-  var broadcastParticipantCounts: (() => void) | undefined;
-}
-
-// Function to broadcast counts to WebSocket clients (server-side)
-function broadcastParticipantCounts() {
-  if (typeof globalThis.broadcastParticipantCounts === 'function') {
-    globalThis.broadcastParticipantCounts();
-    return;
-  }
-  const message = JSON.stringify({ type: 'counts', rooms: participantCounts });
-  if (typeof window === 'undefined') {
-    // Server-side: Send to WebSocket server
-    const WebSocket = require('ws');
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001';
-    const client = new WebSocket(wsUrl);
-    
-    client.on('open', () => {
-      client.send(message);
-      client.close();
-    });
-
-    client.on('error', (error: unknown) => {
-      console.error('WebSocket error:', error);
-    });
-
-    client.on('close', () => {
-      console.log('WebSocket connection closed');
-    });
-  }
-}
-
+// GET handler: fetch participant counts from Supabase
 export async function GET() {
-  return NextResponse.json({ rooms: participantCounts });
+  const { data, error } = await supabase.from('rooms').select('id,participants');
+  if (error) {
+    return NextResponse.json({ error: 'Failed to fetch participant counts' }, { status: 500 });
+  }
+  const countsObj: { [roomId: string]: number } = {};
+  data.forEach((room: any) => {
+    countsObj[room.id] = room.participants;
+  });
+  return NextResponse.json({ rooms: countsObj });
 }
 
+// POST handler: update participant count in Supabase
 export async function POST(request: Request) {
   const { roomId, action } = await request.json();
-  console.log('JOIN API called with:', { roomId, action });
-  
   if (!roomId || !action) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
-
   try {
-    // Debug: print current participantCounts object
-    console.log('Current participantCounts:', participantCounts);
-    // Update counts based on action
+    // Fetch current count from Supabase
+    const { data, error } = await supabase.from('rooms').select('participants').eq('id', roomId).single();
+    if (error) {
+      return NextResponse.json({ error: 'Failed to fetch current count' }, { status: 500 });
+    }
+    let newCount = data?.participants || 0;
     if (action === 'join') {
-      participantCounts[roomId] = (participantCounts[roomId] || 0) + 1;
-      console.log(`Joined room: ${roomId}, new count: ${participantCounts[roomId]}`);
+      newCount += 1;
     } else if (action === 'leave') {
-      participantCounts[roomId] = Math.max(0, (participantCounts[roomId] || 0) - 1);
-      console.log(`Left room: ${roomId}, new count: ${participantCounts[roomId]}`);
+      newCount = Math.max(0, newCount - 1);
     }
-
-    // Update the participants column in Supabase
-    const { data: updateData, error: updateError } = await supabase
-      .from('rooms')
-      .update({ participants: participantCounts[roomId] })
-      .eq('id', roomId);
+    // Update Supabase
+    const { error: updateError } = await supabase.from('rooms').update({ participants: newCount }).eq('id', roomId);
     if (updateError) {
-      console.error('Supabase update error:', updateError);
+      return NextResponse.json({ error: 'Failed to update count' }, { status: 500 });
     }
-
-    // Broadcast the update to all WebSocket clients
-    broadcastParticipantCounts();
-
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error updating participant count:', error);
     return NextResponse.json({ error: 'Failed to update participant count' }, { status: 500 });
   }
 }
