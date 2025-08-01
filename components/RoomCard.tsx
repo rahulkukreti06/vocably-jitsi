@@ -36,10 +36,7 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onJoin, onRemoveRoom, onParti
   const [reporting, setReporting] = useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
 
-  // Debug: log the room prop to check participant count
-  React.useEffect(() => {
-    console.log('RoomCard room prop:', room);
-  }, [room]);
+  // Removed debug console.log for production
 
   // Close menu when clicking outside
   React.useEffect(() => {
