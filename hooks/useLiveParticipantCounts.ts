@@ -36,13 +36,13 @@ export function useLiveParticipantCounts(rooms: { id: string }[]) {
       ws.onopen = () => {
         reconnectAttempts.current = 0;
         startHeartbeat();
-        console.log('[useLiveParticipantCounts] WebSocket connected');
+        // Removed console.log for production
       };
       ws.onmessage = (event) => {
         // Reset heartbeat timeout on any message
         if (heartbeatTimeout) clearTimeout(heartbeatTimeout);
         heartbeatTimeout = setTimeout(() => {
-          console.warn('[useLiveParticipantCounts] No message received for 60s, reconnecting...');
+          // Removed console.warn for production
           wsRef.current?.close();
         }, 60000); // 60s timeout
         try {
@@ -59,11 +59,11 @@ export function useLiveParticipantCounts(rooms: { id: string }[]) {
         if (heartbeatTimeout) clearTimeout(heartbeatTimeout);
         reconnectAttempts.current += 1;
         const delay = Math.min(30000, 2000 * Math.pow(2, reconnectAttempts.current)); // exponential backoff up to 30s
-        console.log(`[useLiveParticipantCounts] WebSocket disconnected, retrying in ${delay / 1000}s...`);
+        // Removed console.log for production
         setTimeout(setupWebSocket, delay);
       };
-      ws.onerror = (err) => {
-        console.error('[useLiveParticipantCounts] WebSocket error:', err);
+      ws.onerror = () => {
+        // Removed console.error for production
       };
     }
     setupWebSocket();
