@@ -90,10 +90,7 @@ export default function Page() {
         .select('*')
         .order('created_at', { ascending: false });
       if (!error && data) {
-        // Debug: log the fetched rooms array and check for duplicate or incorrect ids
-        console.log('Supabase fetchRooms result:', { data, error });
-        const ids = data.map((r: any) => r.id);
-        console.log('Fetched room ids:', ids);
+      
         setRooms(data);
       }
       setRoomsLoading(false);
