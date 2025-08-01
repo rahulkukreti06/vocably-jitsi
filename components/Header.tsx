@@ -53,13 +53,7 @@ export const Header: React.FC<HeaderProps> = ({ onCreateRoomClick, onProfileClic
   const isDesktop = useMediaQuery('(min-width: 641px)');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const { data: session, status } = useSession();
-  useEffect(() => {
-    if (session) {
-      // Debug: log the session object to check user.image
-      // eslint-disable-next-line no-console
-      console.log('SESSION DEBUG:', session);
-    }
-  }, [session]);
+
 
   useEffect(() => {
     setMounted(true);
