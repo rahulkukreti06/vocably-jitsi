@@ -323,11 +323,6 @@ export default function Page() {
     created_by_image: room.created_by_image || null, // always a string or null
   }));
 
-  // Debug: log participantCounts and roomsWithRealCounts
-  React.useEffect(() => {
-    console.log('participantCounts:', participantCounts);
-    console.log('roomsWithRealCounts:', roomsWithRealCounts);
-  }, [participantCounts, roomsWithRealCounts]);
 
   // Remove theme state and logic
   // const [theme, setTheme] = useState<'dark' | 'light'>('dark');
