@@ -12,6 +12,7 @@ import '../styles/responsive.css';
 import type { Metadata, Viewport } from 'next';
 import { Toaster } from 'react-hot-toast';
 import { Providers } from './providers';
+import Script from 'next/script';
 
 export const metadata: Metadata = {
   title: {
@@ -89,6 +90,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
 };
+
 // Google Analytics 4 Measurement ID
 const GA_MEASUREMENT_ID = 'G-MM47J30M5G';
 
@@ -101,15 +103,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="keywords" content="language learning, voice chat, practice English, make friends, talk to strangers, global community, learn languages, public rooms, private rooms, Vocably" />
         
         {/* Google Analytics 4 */}
-        <Script async src="https://www.googletagmanager.com/gtag/js?id=G-MM47J30M5G" />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-MM47J30M5G');
-          `}
-        </Script>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-MM47J30M5G"></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-MM47J30M5G');
+            `
+          }}
+        />
         
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: `{
           \"@context\": \"https://schema.org\",
