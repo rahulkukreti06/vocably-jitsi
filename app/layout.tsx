@@ -89,8 +89,8 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
 };
-// Google Analytics Measurement ID
-const GA_MEASUREMENT_ID = 'G-Z7821647DB';
+// Google Analytics 4 Measurement ID
+const GA_MEASUREMENT_ID = 'G-MM47J30M5G';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -99,18 +99,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, shrink-to-fit=no' />
         <link rel="canonical" href="https://vocably.chat/" />
         <meta name="keywords" content="language learning, voice chat, practice English, make friends, talk to strangers, global community, learn languages, public rooms, private rooms, Vocably" />
-        {/* Google Analytics */}
-        <script async src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}></script>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', '${GA_MEASUREMENT_ID}');
-            `,
-          }}
-        />
+        
+        {/* Google Analytics 4 */}
+        <Script async src="https://www.googletagmanager.com/gtag/js?id=G-MM47J30M5G" />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-MM47J30M5G');
+          `}
+        </Script>
         
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: `{
           \"@context\": \"https://schema.org\",
